@@ -4,8 +4,51 @@
 		<meta charset="utf-8">
 		<title>Hex Dungeon</title>
 		<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.1/dist/phaser-arcade-physics.min.js"></script>
+
 	</head>
 	<body>
+		<div class="slidecontainer">
+			<label for="slider_corner_bias">Corner Bias</label>
+			<input type="range" min="1" max="6" value="5" class="slider" id="slider_corner_bias">
+
+			<label for="slider_wall_bias">Wall Bias</label>
+			<input type="range" min="0" max="1" step="0.05" value="0.3" class="slider" id="slider_wall_bias">
+
+			<label for="slider_floor_bias">Floor Bias</label>
+			<input type="range" min="0" max="1" step="0.05" value="0.7" class="slider" id="slider_floor_bias">
+
+			<button type="button" onclick="run_wavefunction_collapse()">Generate</button>
+		</div>
+
+		<div>
+			<p>Corner: <span id="value_corner"></span>
+			Wall: <span id="wall_corner"></span>
+			Floor: <span id="floor_corner"></span></p>
+		</div>
 		<script src="hexdemo.js"></script>
+
+		<script>
+			var corner_slider = document.getElementById("slider_corner_bias");
+			var wall_slider = document.getElementById("slider_wall_bias");
+			var floor_slider = document.getElementById("slider_floor_bias");
+
+			var corner_output = document.getElementById("value_corner");
+			var wall_output = document.getElementById("wall_corner");
+			var floor_output = document.getElementById("floor_corner");
+
+			corner_output.innerHTML = corner_slider.value;
+			wall_output.innerHTML = wall_slider.value;
+			floor_output.innerHTML = floor_slider.value;
+			
+			corner_slider.oninput = function() {
+				corner_output.innerHTML = corner_slider.value;
+			}
+			wall_slider.oninput = function() {
+				wall_output.innerHTML = wall_slider.value;
+			}
+			floor_slider.oninput = function() {
+				floor_output.innerHTML = floor_slider.value;
+			}
+		</script>
 	</body>
 </html>
