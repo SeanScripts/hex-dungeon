@@ -400,7 +400,11 @@ function collapse_wavefunction(wavefunction, coords) {
     }
 }
 
-function propagate_wavefunction(wavefunction, coords) {
+function collapse_wavefunction_to_value(wavefunction, coords, value) {
+    wavefunction[coords.y][coords.x] = [value];
+}
+
+function propagate_wavefunction(wavefunction, coords, only_walls = false) {
     var stack = [];
     stack.push(coords);
     while (stack.length > 0) {
@@ -413,7 +417,7 @@ function propagate_wavefunction(wavefunction, coords) {
             var new_coords = {"x": curr_coords.x + dir.x, "y": curr_coords.y + dir.y};
             //console.log(i+': ('+new_coords.x+','+new_coords.y+')');
             if (is_coord_valid(new_coords.x, new_coords.y)) {
-                var possible_neighbors = get_possible_neighbors(curr_options, i);
+                var possible_neighbors = get_possible_neighbors(curr_options, i, only_walls);
                 //console.log(possible_neighbors);
                 var other_options = Array.from(wavefunction[new_coords.y][new_coords.x]);
                 for (var j = 0; j < other_options.length; j++) {
@@ -453,7 +457,7 @@ function constrain_wavefunction(wavefunction, coords, option) {
     return false;
 }
 
-function get_possible_neighbors(superposition, direction_index) {
+function get_possible_neighbors(superposition, direction_index, only_walls = false) {
     var possible_neighbors = [];
 
     var corner_slider = document.getElementById("slider_corner_bias");
@@ -462,6 +466,9 @@ function get_possible_neighbors(superposition, direction_index) {
     for (var i = 0; i < superposition.length; i++) {
         var valid_neighbors = hex_matching[superposition[i]][direction_index];
         for (var j = 0; j < valid_neighbors.length; j++) {
+            if (only_walls && valid_neighbors[j] == 64) {
+                continue;
+            }
             // Corner bias - 3 to 6
             if (bitsum(valid_neighbors[j]) >= corner_bias) {
                 continue;
@@ -509,6 +516,16 @@ function run_wavefunction_collapse() {
         //console.log(wavefunction);
         iteration++;
     }
+
+    // var rooms = get_rooms(collapsed_wavefunction);
+    // console.log(rooms[0].length)
+    // for (var t in rooms[0]) {
+    //     console.log(rooms[0][t]);
+    // }
+
+    var room_size_threshold = document.getElementById('slider_room_size').value;
+    fill_rooms_below_size(wavefunction, room_size_threshold);
+
     var collapsed_wavefunction = [];
     for (var i = 0; i < wavefunction.length; i++) {
         var row = [];
@@ -523,14 +540,6 @@ function run_wavefunction_collapse() {
         collapsed_wavefunction.push(row);
     }
 
-    // var rooms = get_rooms(collapsed_wavefunction);
-    // console.log(rooms[0].length)
-    // for (var t in rooms[0]) {
-    //     console.log(rooms[0][t]);
-    // }
-
-    fill_rooms_below_size(collapsed_wavefunction, 10);
-
     set_tile_map(collapsed_wavefunction);
     return collapsed_wavefunction;
 }
@@ -538,10 +547,52 @@ function run_wavefunction_collapse() {
 function fill_rooms_below_size(wavefunction, size) {
     var rooms = get_rooms(wavefunction);
 
-    for (room in rooms) {
-        if (rooms[room].length < size) {
-            for (t in rooms[room]) {
-                wavefunction[rooms[room][t][0]][rooms[room][t][1]] = -2;
+    for (var i = 0; i < rooms.length; i++) {
+        // Fill room with walls
+        if (rooms[i].length < size) {
+            for (var j = 0; j < rooms[i].length; j++) {
+                //wavefunction[rooms[i][j][0]][rooms[i][j][1]] = [0];
+                var curr_coords = {"x": rooms[i][j][1], "y": rooms[i][j][0]};
+                collapse_wavefunction_to_value(wavefunction, curr_coords, 0); // Full wall
+                
+                // Look at adjacent tiles
+                for (var k = 0; k < 6; k++) {
+                    var dir = (curr_coords.y % 2 == 0) ? even_dirs[k] : odd_dirs[k];
+                    var new_coords = {"x": curr_coords.x + dir.x, "y": curr_coords.y + dir.y};
+                    //console.log(i+': ('+new_coords.x+','+new_coords.y+')');
+                    if (is_coord_valid(new_coords.x, new_coords.y)) {
+                        // Check to see if neighbor is not in room
+                        var in_room = false;
+                        for (var j2 = 0; j2 < rooms[i].length; j2++) {
+                            if (rooms[i][j2][1] == new_coords.x && rooms[i][j2][0] == new_coords.y) {
+                                in_room = true;
+                            }
+                        }
+                        if (!in_room) {
+                            // Figure out the tile needed for this to work
+                            var adj_value = wavefunction[new_coords.y][new_coords.x][0];
+                            var new_value = adj_value;
+                            // direction is 0
+                            // wall is [a][b][c][d][e][f]
+                            // d, c, and b -> 0
+                            //Math.pow(2, k)
+                            var wall_bit1 = Math.pow(2, (k+2)%6);
+                            if ((adj_value & wall_bit1) > 0) {
+                                new_value -= wall_bit1;
+                            }
+                            var wall_bit2 = Math.pow(2, (k+3)%6);
+                            if ((adj_value & wall_bit2) > 0) {
+                                new_value -= wall_bit2;
+                            }
+                            var wall_bit3 = Math.pow(2, (k+4)%6);
+                            if ((adj_value & wall_bit3) > 0) {
+                                new_value -= wall_bit3;
+                            }
+
+                            wavefunction[new_coords.y][new_coords.x] = [new_value];
+                        }
+                    }
+                }
             }
         }
     }
@@ -551,17 +602,18 @@ function get_rooms(wavefunction) {
     var rooms = [];
     for (var i = 0; i < wavefunction.length; i++) {
         for (var j = 0; j < wavefunction[i].length; j++) {
-            if (1 + wavefunction[i][j] == 65) {
+            if (wavefunction[i][j] == 64) {
                 var room = [];
                 get_rooms_helper(wavefunction, i, j, room);
                 rooms.push(room);
             }
         }
     }
+    // Change back to the original value
     for (var i = 0; i < wavefunction.length; i++) {
         for (var j = 0; j < wavefunction[i].length; j++) {
-            if (1 + wavefunction[i][j] == -1) {
-                wavefunction[i][j] = 64;
+            if (wavefunction[i][j] == -1) {
+                wavefunction[i][j] = [64];
             }
         }
     }
@@ -569,14 +621,14 @@ function get_rooms(wavefunction) {
 }
 
 function get_rooms_helper(wavefunction, i, j, room) {
-    if(i < 0 || i == wavefunction.length || j < 0 || j == wavefunction[i].length || 1 + wavefunction[i][j] != 65) {
+    if(i < 0 || i == wavefunction.length || j < 0 || j == wavefunction[i].length || wavefunction[i][j] != 64) {
         return;
     }
     room.push([i,j]);
-    wavefunction[i][j] = -2;
+    wavefunction[i][j] = [-1];
     var adjacent = get_adjacent_tiles(i,j);
-    for (var t in adjacent) {
-        get_rooms_helper(wavefunction, adjacent[t][0], adjacent[t][1], room);
+    for (var k = 0; k < adjacent.length; k++) {
+        get_rooms_helper(wavefunction, adjacent[k][0], adjacent[k][1], room);
     }
 }
 

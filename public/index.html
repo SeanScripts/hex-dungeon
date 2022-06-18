@@ -17,13 +17,19 @@
 			<label for="slider_floor_bias">Floor Bias</label>
 			<input type="range" min="0" max="1" step="0.05" value="0.7" class="slider" id="slider_floor_bias">
 
+			<label for="slider_room_size">Room Size Threshold</label>
+			<input type="range" min="0" max="20" step="1" value="10" class="slider" id="slider_room_size">
+
 			<button type="button" onclick="run_wavefunction_collapse()">Generate</button>
 		</div>
 
 		<div>
-			<p>Corner: <span id="value_corner"></span>
-			Wall: <span id="wall_corner"></span>
-			Floor: <span id="floor_corner"></span></p>
+			<p>
+				Corner: <span id="value_corner"></span>
+				Wall: <span id="wall_corner"></span>
+				Floor: <span id="floor_corner"></span>
+				Room Size Threshold: <span id="room_size"></span>
+			</p>
 		</div>
 		<script src="hexdemo.js"></script>
 
@@ -31,14 +37,17 @@
 			var corner_slider = document.getElementById("slider_corner_bias");
 			var wall_slider = document.getElementById("slider_wall_bias");
 			var floor_slider = document.getElementById("slider_floor_bias");
+			var room_size_slider = document.getElementById("slider_room_size");
 
 			var corner_output = document.getElementById("value_corner");
 			var wall_output = document.getElementById("wall_corner");
 			var floor_output = document.getElementById("floor_corner");
+			var room_size_output = document.getElementById("room_size");
 
 			corner_output.innerHTML = corner_slider.value;
 			wall_output.innerHTML = wall_slider.value;
 			floor_output.innerHTML = floor_slider.value;
+			room_size_output.innerHTML = room_size_slider.value;
 			
 			corner_slider.oninput = function() {
 				corner_output.innerHTML = corner_slider.value;
@@ -48,6 +57,9 @@
 			}
 			floor_slider.oninput = function() {
 				floor_output.innerHTML = floor_slider.value;
+			}
+			room_size_slider.oninput = function() {
+				room_size_output.innerHTML = room_size_slider.value;
 			}
 		</script>
 	</body>
