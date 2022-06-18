@@ -174,18 +174,51 @@ function selectHex(pointer) {
     return {"ix": ix, "iy": iy};
 }
 
+function change_selection_display() {
+    return;
+}
+
+function get_hex_selection() {
+    var hex_selection_dropdown = document.getElementById("hex_selection_dropdown");
+    var hex_selection = hex_selection_dropdown.value;
+    return hex_selection;
+}
 function changeHex(pointer) {
     pos = selectHex(pointer);
     ix = pos['ix'];
     iy = pos['iy'];
     if (iy >= 0 && iy < map.layers[0].data.length && ix >= 0 && ix < map.layers[0].data[iy].length) {
         // Change the tile?
-        map.layers[0].data[iy][ix].index = 65; //Math.floor(1+Math.random()*65);
-        iterate_wavefunction_controlled(wavefunction, {"x": ix, "y": iy});
+        map.layers[0].data[iy][ix].index = get_hex_selection();
         //checkAllMatching(hex_matching);
     }
 }
+function split_dynamic_tilemap() {
+    var slider_tile_size = document.getElementById("slider_tile_size");
+    var tile_size = parseInt(slider_tile_size.value);
+    var tiles = [];
+    var w = 0;
+    var h = 0;
+    for (var y = 0; y < map.layers[0].data.length - tile_size; y += tile_size) {
+        row = [];
+        h++;
+        for (var x = 0; x < map.layers[0].data.length - tile_size; x += tile_size) {
+            var tile = [];
+            w++;
+            for (var iy = y; iy < y+tile_size; iy ++) {
+                for (var ix = x; ix < x+tile_size; ix ++) {
+                    tile.push([iy,ix, map.layers[0].data[iy][ix].index]);
+                }
+            }
+            row.push(tile);
+        }
+        tiles.push(row);
+    }
+    
+    wavefunction = init_wavefunction(w,h);
 
+    return tiles;
+}
 function update (time, delta) {
     controls.update(delta);
 }
