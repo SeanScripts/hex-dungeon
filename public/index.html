@@ -3,8 +3,6 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Hex Dungeon</title>
-		<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.1/dist/phaser-arcade-physics.min.js"></script>
-
 	</head>
 	<body>
 		<div class="slidecontainer">
@@ -101,7 +99,10 @@
 			<input type="range" min="1" max="10" value="5" class="slider" id="slider_tile_size">
 			<button type="button" onclick="split_dynamic_tilemap()">Split Tilemap</button>
 		</div>
-		<script src="hexdemo.js"></script>
+
+		<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.1/dist/phaser-arcade-physics.min.js"></script>
+		<script src="game.js"></script>
+		<script src="HexDemoScene.js"></script>
 
 		<script>
 			var corner_slider = document.getElementById("slider_corner_bias");
